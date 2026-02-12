@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h2 class="mb-0">Upload Resumes & Rank</h2>
+
+      <a class="btn btn-sm btn-outline-secondary"
+         href="{% url 'admin:jobs_jobdescription_changelist' %}"
+         target="_blank">
+        Manage JDs (Admin)
+      </a>
+    </div>
+
+    {% if form.errors %}
+      <div class="alert alert-danger mb-3">
+        <strong>Please fix the errors below:</strong>
+        <div class="mt-2">{{ form.errors }}</div>
+      </div>
+    {% endif %}
+
+    <form method="post"
+          action="{% url 'dashboard:upload' %}"
+          enctype="multipart/form-data"
+          class="card shadow-sm">
+      {% csrf_token %}
+
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="id_job" class="form-label">Job Description</label>
+          {{ form.job }}
+        </div>
+
+        <div class="mb-2">
+          <label for="id_resumes" class="form-label">Resumes (PDF/DOCX) - multiple</label>
+          {{ form.resumes }}
+        </div>
+
+        <div class="form-text mb-3" id="selectedFilesText">No files selected</div>
+
+        <button type="submit" class="btn btn-primary w-100">Rank Resumes</button>
+
+        <p class="text-muted small mt-3 mb-0">
+          Note: After submit, the browser may clear the file input (security behavior).
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const input = document.getElementById("id_resumes");
+    const text = document.getElementById("selectedFilesText");
+    if (!input || !text) return;
+
+    input.addEventListener("change", function () {
+      if (!this.files || this.files.length === 0) {
+        text.textContent = "No files selected";
+        return;
+      }
+      const names = Array.from(this.files).map(f => f.name);
+      text.textContent = names.join(", ");
+    });
+  })();
+</script>
+
+{% endblock %}

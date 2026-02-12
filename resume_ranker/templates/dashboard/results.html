@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0">Batch {{ batch.id }} Results</h3>
+    <div class="text-muted">
+      Status: <strong>{{ batch.status }}</strong> |
+      Job: <strong>{{ batch.job.title }}</strong>
+    </div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'dashboard:upload' %}">New Ranking</a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-striped align-middle mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>Resume</th>
+          <th class="text-end">Rank</th>
+          <th>Total Exp</th>
+          <th>Skills</th>
+          <th>Project Categories</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for r in results %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ r.resume.original_filename }}</div>
+              <div class="text-muted small">Resume ID: {{ r.resume.id }}</div>
+            </td>
+
+            <td class="text-end">
+              <span class="badge bg-primary fs-6">{{ r.score }}</span>
+            </td>
+
+            <td>
+              {% with exp=r.resume.extracted.total_years_experience %}
+                {% if exp %}{{ exp }} yrs{% else %}<span class="text-muted">-</span>{% endif %}
+              {% endwith %}
+            </td>
+
+            <td style="max-width: 520px;">
+              {% with skills=r.resume.extracted.skills %}
+                {% if skills %}
+                  <div class="d-flex flex-wrap gap-1">
+                    {% for s in skills|slice:":14" %}
+                      <span class="badge rounded-pill text-bg-light border">{{ s }}</span>
+                    {% endfor %}
+                    {% if skills|length > 14 %}
+                      <span class="badge rounded-pill text-bg-secondary">+{{ skills|length|add:"-14" }}</span>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+
+            <td>
+              {% with cats=r.resume.extracted.project_categories %}
+                {% if cats %}
+                  <div class="d-flex flex-wrap gap-1">
+                    {% for c in cats %}
+                      <span class="badge rounded-pill bg-secondary">{{ c }}</span>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:result_detail' r.id %}">
+                Details
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-muted p-3">
+              No results yet. Refresh in a moment.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

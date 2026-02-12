@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="mb-3 d-flex justify-content-between align-items-center">
+  <a href="{% url 'dashboard:results' r.batch.id %}" class="btn btn-sm btn-outline-secondary">Back</a>
+  <div class="text-muted small">
+    Batch #{{ r.batch.id }} • Result #{{ r.id }}
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Left: Main analysis -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="mb-1">{{ r.resume.original_filename }}</h4>
+        <div class="text-muted mb-3">
+          Job: <strong>{{ r.job.title }}</strong> |
+          Resume ID: {{ r.resume.id }}
+        </div>
+
+        <div class="d-flex align-items-end justify-content-between">
+          <div>
+            <div class="text-muted">Match Score</div>
+            <div class="display-6 fw-semibold">{{ r.score }}</div>
+          </div>
+
+          <div style="width: 55%;">
+            <div class="progress" style="height: 14px;">
+              <div class="progress-bar bg-primary score-bar"
+                   role="progressbar"
+                   data-score="{{ r.score }}"
+                   aria-valuenow="{{ r.score }}"
+                   aria-valuemin="0"
+                   aria-valuemax="100"></div>
+            </div>
+            <div class="text-muted small mt-1">0–100</div>
+          </div>
+        </div>
+
+        <hr class="my-4"/>
+
+        <h5 class="mb-2">Extracted Profile</h5>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-4">
+            <div class="border rounded p-2">
+              <div class="text-muted small">Total Experience</div>
+              <div class="fw-semibold">
+                {% with exp=r.resume.extracted.total_years_experience %}
+                  {% if exp %}{{ exp }} yrs{% else %}-{% endif %}
+                {% endwith %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div class="border rounded p-2">
+              <div class="text-muted small">Project Categories</div>
+              <div class="d-flex flex-wrap gap-1 mt-1">
+                {% with cats=r.resume.extracted.project_categories %}
+                  {% if cats %}
+                    {% for c in cats %}
+                      <span class="badge rounded-pill bg-secondary">{{ c }}</span>
+                    {% endfor %}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border rounded p-2 mb-3">
+          <div class="text-muted small">Skills</div>
+          <div class="d-flex flex-wrap gap-1 mt-1">
+            {% with skills=r.resume.extracted.skills %}
+              {% if skills %}
+                {% for s in skills|slice:":24" %}
+                  <span class="badge rounded-pill text-bg-light border">{{ s }}</span>
+                {% endfor %}
+                {% if skills|length > 24 %}
+                  <span class="badge rounded-pill text-bg-secondary">+{{ skills|length|add:"-24" }}</span>
+                {% endif %}
+              {% else %}
+                <span class="text-muted">-</span>
+              {% endif %}
+            {% endwith %}
+          </div>
+        </div>
+
+        <h5>Reasoning</h5>
+        <p class="mb-0">{{ r.reasoning }}</p>
+
+        <hr class="my-4"/>
+
+        <h5>Strengths</h5>
+        {% if r.strengths %}
+          <ul class="mb-0">
+            {% for s in r.strengths %}
+              <li>{{ s }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">Not available.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Missing skills + Suggestions + Breakdown -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-2">Missing Skills (JD)</h5>
+        <div class="d-flex flex-wrap gap-1">
+          {% if r.missing_required %}
+            {% for m in r.missing_required|slice:":20" %}
+              <span class="badge rounded-pill bg-warning text-dark">{{ m }}</span>
+            {% endfor %}
+          {% else %}
+            <span class="text-muted">None detected</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-2">Candidate Suggestions</h5>
+        {% if r.candidate_suggestions %}
+          <ul class="mb-0">
+            {% for s in r.candidate_suggestions %}
+              <li>{{ s }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted">
+            No suggestions available for this result. Re-run ranking (or enable OpenAI).
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-2">Score Breakdown</h5>
+        <pre class="mb-0" style="white-space: pre-wrap;">{{ r.score_breakdown }}</pre>
+
+        {% if r.model_meta %}
+          <hr class="my-3"/>
+          <div class="text-muted small">
+            <strong>Meta:</strong> {{ r.model_meta }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    // Set progress bar width without Django template syntax inside CSS
+    document.querySelectorAll(".score-bar").forEach(function (el) {
+      const score = parseInt(el.dataset.score || "0", 10);
+      const safe = Math.max(0, Math.min(100, isNaN(score) ? 0 : score));
+      el.style.width = safe + "%";
+    });
+  })();
+</script>
+
+{% endblock %}
