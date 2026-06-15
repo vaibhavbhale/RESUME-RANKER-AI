@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h2 class="mb-0">Upload Resumes & Rank</h2>
+
+      <a class="btn btn-sm btn-outline-secondary"
+         href="{% url 'admin:jobs_jobdescription_changelist' %}"
+         target="_blank">
+        Manage JDs (Admin)
+      </a>
+    </div>
+
+    {% if form.errors %}
+      <div class="alert alert-danger mb-3">
+        <strong>Please fix the errors below:</strong>
+        <div class="mt-2">{{ form.errors }}</div>
+      </div>
+    {% endif %}
+
+    <form id="rankForm" method="post"
+          action="{% url 'dashboard:upload' %}"
+          enctype="multipart/form-data"
+          class="card shadow-sm">
+      {% csrf_token %}
+
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="id_job" class="form-label">Job Description</label>
+          {{ form.job }}
+        </div>
+
+        <div class="mb-2">
+          <label for="id_resumes" class="form-label">Resumes (PDF/DOCX) - multiple</label>
+          {{ form.resumes }}
+        </div>
+
+        <div class="small text-muted mb-1" id="fileCountText">No files selected</div>
+        <div class="small text-muted mb-3" id="selectedFilesText"></div>
+
+        <!-- Preview -->
+        <div id="previewBox" class="border rounded p-2 mb-3" style="display:none;">
+          <div class="fw-semibold mb-2">Resume Preview (Fresher/Experienced)</div>
+          <div id="previewContent" class="small text-muted">Loading...</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Rank Resumes</button>
+
+        <p class="text-muted small mt-3 mb-0">
+          Note: After submit, browser may clear file input (security behavior).
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const input = document.getElementById("id_resumes");
+    const form = document.getElementById("rankForm");
+
+    const fileCountText = document.getElementById("fileCountText");
+    const selectedFilesText = document.getElementById("selectedFilesText");
+
+    const previewBox = document.getElementById("previewBox");
+    const previewContent = document.getElementById("previewContent");
+    const previewUrl = "{% url 'dashboard:resume_preview' %}";
+
+    function csrfToken() {
+      const el = form.querySelector('input[name="csrfmiddlewaretoken"]');
+      return el ? el.value : "";
+    }
+
+    function badge(level) {
+      if (level === "Fresher") return `<span class="badge bg-success">Fresher</span>`;
+      return `<span class="badge bg-primary">Experienced</span>`;
+    }
+
+    function renderPreview(items) {
+      let html = `
+        <table class="table table-sm mb-0 align-middle">
+          <thead>
+            <tr>
+              <th style="width:45%;">File</th>
+              <th style="width:12%;">Level</th>
+              <th style="width:10%;">Exp</th>
+              <th>Top Skills</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (const it of items) {
+        if (it.error) {
+          html += `
+            <tr>
+              <td>${it.filename}</td>
+              <td colspan="3" class="text-danger">${it.error}</td>
+            </tr>
+          `;
+          continue;
+        }
+
+        const years = (it.years === null || it.years === undefined) ? "-" : `${it.years} yrs`;
+        const skills = (it.skills || []).join(", ") || "-";
+
+        html += `
+          <tr>
+            <td>${it.filename}</td>
+            <td>${badge(it.level)}</td>
+            <td>${years}</td>
+            <td>${skills}</td>
+          </tr>
+        `;
+      }
+
+      html += `</tbody></table>`;
+      previewContent.innerHTML = html;
+    }
+
+    async function fetchPreview() {
+      if (!input.files || input.files.length === 0) {
+        fileCountText.textContent = "No files selected";
+        selectedFilesText.textContent = "";
+        previewBox.style.display = "none";
+        return;
+      }
+
+      const names = Array.from(input.files).map(f => f.name);
+      fileCountText.textContent = `${names.length} file${names.length > 1 ? "s" : ""}`;
+      selectedFilesText.textContent = names.join(", ");
+
+      previewBox.style.display = "block";
+      previewContent.textContent = "Loading preview...";
+
+      const fd = new FormData();
+      for (const f of input.files) fd.append("resumes", f);
+
+      const resp = await fetch(previewUrl, {
+        method: "POST",
+        headers: {"X-CSRFToken": csrfToken()},
+        body: fd
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        previewContent.innerHTML = `<div class="text-danger">${data.error || "Preview failed"}</div>`;
+        return;
+      }
+      renderPreview(data.items || []);
+    }
+
+    if (input) {
+      input.addEventListener("change", () => {
+        fetchPreview().catch(err => {
+          previewBox.style.display = "block";
+          previewContent.innerHTML = `<div class="text-danger">${err.toString()}</div>`;
+        });
+      });
+    }
+  })();
+</script>
+
+{% endblock %}
