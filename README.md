@@ -1,15 +1,32 @@
-# Resume Ranker AI 🚀
-Django + OpenAI powered resume ranking system.
+# Resume Ranker AI 🚀  
+**Django + OpenAI Powered Resume Ranking System**
 
-## Features
-- Login (username/password)
-- Seed Job Descriptions (Fresher + Experienced variants)
-- Upload multiple resumes (PDF/DOCX)
-- Extract text, parse skills/experience/categories
-- Score 0–100 with fresher/experienced-aware scoring
-- Ranked results + detail view
-- OpenAI reasoning & suggestions (optional)
+Recruiter-focused web app that lets you upload multiple PDF/DOCX resumes, select or paste a job description, and generate a ranked shortlist with a **0–100 match score**, extracted insights, and explainable AI feedback.
 
+---
+
+## 🔹 Key Features
+
+- 📂 **Multi-resume upload** (PDF/DOCX)  
+- 📝 **Job Description management** (supports *Fresher* & *Experienced* variants)  
+- 🧠 **Automated text extraction & structured parsing**
+  - Skills  
+  - Total Experience (fresher-safe detection)  
+  - Project Categories (Backend / Frontend / Data / DevOps, etc.)
+- 📊 **Resume–JD match scoring (0–100)** with **score breakdown**
+- ✅ **Missing-skill insights** to highlight gaps vs JD requirements  
+- 🏆 **Ranked results dashboard** (sorted by score)
+- 🔎 **Detailed candidate analysis page**
+  - Match reasoning, strengths, suggestions
+  - Skills & categories shown as tags/chips
+- 🤖 **OpenAI-powered reasoning & resume improvement suggestions** *(optional toggle via `.env`)*
+- 💾 **SQLite** for development
+
+---
+
+## 🔐 Demo Login (Local)
+**Username:** `admin`  
+**Password:** `admin@12345`  
 ## Run
 ```powershell
 python -m venv .venv
@@ -22,3 +39,7 @@ python manage.py createsuperuser
 python manage.py seed_jds --username admin --overwrite
 python manage.py runserver
 ```
+
+
+
+> Note: Demo credentials are for local testing only. In production, use your own accounts and secure secrets via environment variables.
